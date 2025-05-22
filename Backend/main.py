@@ -1,8 +1,10 @@
 from fastapi import FastAPI, Form, UploadFile, File, status, HTTPException
 from fastapi.responses import JSONResponse
 from fastapi.middleware.cors import CORSMiddleware
+from Backend.router import admin_router, company_router
 import os
 import json
+import yaml
 
 app = FastAPI()
 
@@ -18,16 +20,6 @@ app.add_middleware(
     allow_headers=["*"],
 )
 
-@app.post("/register/client")
-async def register_client():
-    return JSONResponse(content={"message": "Client registered successfully"}, status_code=status.HTTP_200_OK)
 
-@app.post("/register/support_agent")
-async def register_support_agent():
-    return {"message": "Support agent registered successfully"}
-
-@app.post("/login")
-async def login(username: str, password = Form(...)):
-    # Logic for checking
-
-    return {"tokenID": "Jwt token"}
+app.include_router(admin_router.router)
+app.include_router(company_router.router)
