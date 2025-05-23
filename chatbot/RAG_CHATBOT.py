@@ -2,6 +2,7 @@ import os
 import json
 import uuid
 import datetime
+import requests
 from transformers import pipeline
 from sentence_transformers import SentenceTransformer
 import chromadb
@@ -74,9 +75,23 @@ Question: {query}
 Answer:"""
 
     response = model.generate_content(prompt)
-    # Simulate confidence by inverse of average distance
     avg_score = 1 - sum(results['distances'][0]) / len(results['distances'][0])
     return response.text, avg_score
+
+def notify_human_agent(session_id, user_input):
+    payload = {
+        "session_id": session_id,
+        "message": user_input,
+        "status": "escalation_triggered"
+    }
+    try:
+        response = requests.post("https://your-agent-alert-endpoint.com/notify", json=payload)
+        if response.status_code == 200:
+            print("Bot: Human agent has been notified successfully.")
+        else:
+            print("Bot: Failed to notify human agent.")
+    except Exception as e:
+        print(f"Bot: Notification failed due to: {e}")
 
 # CHAT SESSION
 session_id = str(uuid.uuid4())
@@ -104,6 +119,7 @@ while True:
     else:
         print("Bot: I'm not confident in my answer. Escalating to a human agent... 🧑‍💼")
         chat_history_log.append("Bot: Escalation triggered due to low confidence.")
+        notify_human_agent(session_id, user_input)
 
 # Save chat history
 with open(f"chat_history_{session_id}.txt", "w", encoding="utf-8") as f:
