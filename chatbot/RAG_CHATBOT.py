@@ -1,270 +1,115 @@
-{
- "cells": [
-  {
-   "cell_type": "code",
-   "execution_count": null,
-   "id": "0c325c70",
-   "metadata": {},
-   "outputs": [
-    {
-     "data": {
-      "application/vnd.jupyter.widget-view+json": {
-       "model_id": "6ce84e0092f6493484c60a7904515081",
-       "version_major": 2,
-       "version_minor": 0
-      },
-      "text/plain": [
-       "Batches:   0%|          | 0/1 [00:00<?, ?it/s]"
-      ]
-     },
-     "metadata": {},
-     "output_type": "display_data"
-    },
-    {
-     "name": "stdout",
-     "output_type": "stream",
-     "text": [
-      "🤖 Integrated Gemini Chatbot with RAG (type 'exit' to quit)\n",
-      "Bot (RAG): Hi there! How can I help you today?\n",
-      "\n",
-      "Bot (RAG): The provided text focuses on shipping and delivery options.  There is no information about singing capabilities.  Therefore, the answer is **no**.\n",
-      "\n",
-      "Bot (RAG): We offer standard, expedited, and express shipping through FedEx, UPS, and USPS.  Free standard shipping is available on orders over $50 within the continental U.S.  However, some items (batteries, aerosols, perishables) may have shipping restrictions.\n",
-      "\n",
-      "Bot (RAG): No, you cannot ship children.  Shipping children is illegal and incredibly dangerous.\n",
-      "\n",
-      "Bot (RAG): Based on the provided text, you can ship most items, but there are restrictions on batteries, aerosols, and perishables.  The exact restrictions aren't detailed.  To know for sure if a specific item is shippable, you would need to check with the company directly or review their shipping policy.\n",
-      "\n",
-      "Bot (RAG): You're welcome!  Is there anything else I can help you with?\n",
-      "\n",
-      "Bot (RAG): The provided context gives answers to questions about shipping delays, combining orders, and rerouting packages.  There is no question in the context that has \"no\" as an answer.  Therefore, there is no answer to provide.\n",
-      "\n",
-      "Bot: Goodbye!\n",
-      "\n",
-      "Summary:\n",
-      " The user initially asked the bot to sing, then inquired about shipping options.  The bot explained its shipping options (standard, expedited, express), noting restrictions on certain items.  Crucially, the bot clarified that shipping children is illegal.  The conversation ended with the user expressing satisfaction.\n",
-      "\n"
-     ]
+import os
+import json
+import uuid
+import datetime
+from transformers import pipeline
+from sentence_transformers import SentenceTransformer
+import chromadb
+import google.generativeai as genai
+
+# Set up environment and API
+os.environ["GOOGLE_API_KEY"] = "your-api-key-here"  # Replace with your actual key or load from .env
+genai.configure(api_key=os.environ["GOOGLE_API_KEY"])
+
+# Load FAQs
+with open('faq.json', 'r') as f:
+    data = json.load(f)
+
+documents = [f"Q: {item['question']}\nA: {item['answer']}" for item in data]
+metadatas = [{"question": item["question"]} for item in data]
+
+# Embedding model
+embedder = SentenceTransformer("all-MiniLM-L6-v2")
+embeddings = embedder.encode(documents, show_progress_bar=True)
+
+# Setup ChromaDB
+chroma_client = chromadb.PersistentClient(path="./chroma_faq")
+collection = chroma_client.get_or_create_collection(name="faq")
+
+if len(collection.get()['ids']) == 0:
+    collection.add(
+        documents=documents,
+        embeddings=embeddings.tolist(),
+        metadatas=metadatas,
+        ids=[str(i) for i in range(len(documents))]
+    )
+
+# Load Gemini model
+model = genai.GenerativeModel("gemini-1.5-flash")
+chat = model.start_chat(history=[])
+
+# Emotion Detection Model
+emotion_classifier = pipeline("text-classification", model="j-hartmann/emotion-english-distilroberta-base", return_all_scores=True)
+
+def detect_emotion(text):
+    emotions = emotion_classifier(text)[0]
+    top_emotion = max(emotions, key=lambda x: x['score'])
+    return top_emotion['label'], top_emotion['score']
+
+def add_empathy_to_response(emotion, base_response):
+    empathy_prefix = {
+        "joy": "That's wonderful to hear! 😊 ",
+        "anger": "I'm sorry you're feeling upset. Let's work on this together. ",
+        "sadness": "I'm here for you. 💙 ",
+        "fear": "Don't worry, I'm here to help. ",
+        "surprise": "That's interesting! ",
+        "neutral": ""
     }
-   ],
-   "source": [
-    "import os\n",
-    "import json\n",
-    "import uuid\n",
-    "from datetime import datetime\n",
-    "from dotenv import load_dotenv\n",
-    "import google.generativeai as genai\n",
-    "from sentence_transformers import SentenceTransformer, util\n",
-    "import chromadb\n",
-    "import requests\n",
-    "from langdetect import detect\n",
-    "\n",
-    "# Load environment variables\n",
-    "load_dotenv()\n",
-    "os.environ[\"GOOGLE_API_KEY\"] = os.getenv(\"GOOGLE_API_KEY\")\n",
-    "os.environ[\"GOOGLE_TRANSLATE_KEY\"] = os.getenv(\"GOOGLE_TRANSLATE_KEY\")\n",
-    "genai.configure(api_key=os.environ[\"GOOGLE_API_KEY\"])\n",
-    "\n",
-    "# Generate session metadata\n",
-    "session_id = str(uuid.uuid4())[:8]\n",
-    "session_time = datetime.now().strftime(\"%Y-%m-%d_%H-%M-%S\")\n",
-    "session_prefix = f\"session_{session_time}_{session_id}\"\n",
-    "\n",
-    "# Load FAQs\n",
-    "def load_faq_files(files):\n",
-    "    all_data = []\n",
-    "    for file in files:\n",
-    "        with open(file, 'r') as f:\n",
-    "            data = json.load(f)\n",
-    "            for item in data:\n",
-    "                item[\"source_file\"] = file\n",
-    "            all_data.extend(data)\n",
-    "    return all_data\n",
-    "\n",
-    "faq_data = load_faq_files([\"faq.json\", \"extra_faq.json\"])\n",
-    "\n",
-    "# Prepare documents and metadata\n",
-    "documents = [f\"Q: {item['question']}\\nA: {item['answer']}\" for item in faq_data]\n",
-    "metadatas = [{\"question\": item[\"question\"], \"source\": item[\"source_file\"]} for item in faq_data]\n",
-    "\n",
-    "# Vector embeddings\n",
-    "embedder = SentenceTransformer(\"all-MiniLM-L6-v2\")\n",
-    "embeddings = embedder.encode(documents, show_progress_bar=True)\n",
-    "\n",
-    "# ChromaDB setup\n",
-    "chroma_client = chromadb.PersistentClient(path=\"./chroma_faq\")\n",
-    "collection = chroma_client.get_or_create_collection(name=\"faq\")\n",
-    "\n",
-    "if len(collection.get()['ids']) == 0:\n",
-    "    collection.add(\n",
-    "        documents=documents,\n",
-    "        embeddings=embeddings.tolist(),\n",
-    "        metadatas=metadatas,\n",
-    "        ids=[str(i) for i in range(len(documents))]\n",
-    "    )\n",
-    "\n",
-    "# Gemini setup\n",
-    "model = genai.GenerativeModel(\"gemini-1.5-flash\")\n",
-    "chat = model.start_chat(history=[])\n",
-    "\n",
-    "# Translation helpers\n",
-    "def translate_text(text, target_lang=\"en\"):\n",
-    "    url = \"https://translation.googleapis.com/language/translate/v2\"\n",
-    "    params = {\n",
-    "        \"q\": text,\n",
-    "        \"target\": target_lang,\n",
-    "        \"key\": os.environ[\"GOOGLE_TRANSLATE_KEY\"]\n",
-    "    }\n",
-    "    response = requests.post(url, data=params)\n",
-    "    if response.status_code == 200:\n",
-    "        return response.json()['data']['translations'][0]['translatedText']\n",
-    "    else:\n",
-    "        return text  # fallback\n",
-    "\n",
-    "def detect_language(text):\n",
-    "    try:\n",
-    "        return detect(text)\n",
-    "    except:\n",
-    "        return \"en\"\n",
-    "\n",
-    "# RAG answer generation\n",
-    "def generate_gemini_answer(query, k=3, similarity_threshold=0.6):\n",
-    "    try:\n",
-    "        query_embedding = embedder.encode([query])[0]\n",
-    "        results = collection.query(query_embeddings=[query_embedding], n_results=10)\n",
-    "\n",
-    "        if not results.get(\"documents\") or not results[\"documents\"][0]:\n",
-    "            return None, None\n",
-    "\n",
-    "        filtered = [\n",
-    "            (doc, meta, dist)\n",
-    "            for doc, meta, dist in zip(\n",
-    "                results[\"documents\"][0],\n",
-    "                results[\"metadatas\"][0],\n",
-    "                results[\"distances\"][0]\n",
-    "            )\n",
-    "            if dist < (1 - similarity_threshold)\n",
-    "        ]\n",
-    "\n",
-    "        if not filtered:\n",
-    "            return None, None\n",
-    "\n",
-    "        top_results = filtered[:k]\n",
-    "        context = \"\\n\\n\".join([doc for doc, _, _ in top_results])\n",
-    "        sources = [(meta['source'], round(1 - dist, 2)) for _, meta, dist in top_results]\n",
-    "\n",
-    "        prompt = f\"\"\"Answer the following question using the context provided.\n",
-    "\n",
-    "Context:\n",
-    "{context}\n",
-    "\n",
-    "Question: {query}\n",
-    "Answer:\"\"\"\n",
-    "\n",
-    "        response = model.generate_content(prompt)\n",
-    "        return response.text, sources\n",
-    "\n",
-    "    except Exception as e:\n",
-    "        return f\"An error occurred: {str(e)}\", None\n",
-    "\n",
-    "# Semantic chat search\n",
-    "def search_chat_history(query, top_k=3, semantic=True):\n",
-    "    try:\n",
-    "        with open(f\"{session_prefix}_chat_history.txt\", \"r\", encoding=\"utf-8\") as f:\n",
-    "            lines = [line.strip() for line in f if line.strip()]\n",
-    "    except FileNotFoundError:\n",
-    "        return [\"No chat history found.\"]\n",
-    "\n",
-    "    if not lines:\n",
-    "        return [\"No chat history available.\"]\n",
-    "\n",
-    "    if semantic:\n",
-    "        line_embeddings = embedder.encode(lines, convert_to_tensor=True)\n",
-    "        query_embedding = embedder.encode([query], convert_to_tensor=True)\n",
-    "        hits = util.semantic_search(query_embedding, line_embeddings, top_k=top_k)[0]\n",
-    "        results = [f\"[{lines[hit['corpus_id']]}] (score: {round(hit['score'], 2)})\" for hit in hits]\n",
-    "    else:\n",
-    "        results = [line for line in lines if query.lower() in line.lower()][:top_k]\n",
-    "\n",
-    "    return results or [\"No results found.\"]\n",
-    "\n",
-    "# Chatbot session\n",
-    "chat_history_log = []\n",
-    "print(f\"🌐 Gemini Chatbot with Multi-language Support (Session ID: {session_id}) — type 'exit' or 'search: <query>'\")\n",
-    "\n",
-    "while True:\n",
-    "    user_input = input(\"You: \")\n",
-    "    if user_input.lower() in [\"exit\", \"quit\"]:\n",
-    "        print(\"Bot: Goodbye!\")\n",
-    "        break\n",
-    "\n",
-    "    user_lang = detect_language(user_input)\n",
-    "    translated_input = translate_text(user_input, target_lang=\"en\")\n",
-    "    timestamp = datetime.now().strftime(\"%Y-%m-%d %H:%M:%S\")\n",
-    "    chat_history_log.append(f\"{timestamp} | {session_id} | User ({user_lang}): {user_input} → [EN] {translated_input}\")\n",
-    "\n",
-    "    if user_input.lower().startswith(\"search:\"):\n",
-    "        query = user_input[len(\"search:\"):].strip()\n",
-    "        results = search_chat_history(query)\n",
-    "        print(\"\\n🔎 Search Results:\")\n",
-    "        for res in results:\n",
-    "            print(res)\n",
-    "        continue\n",
-    "\n",
-    "    rag_response, sources = generate_gemini_answer(translated_input)\n",
-    "    if rag_response:\n",
-    "        final_response = translate_text(rag_response, target_lang=user_lang)\n",
-    "        print(\"Bot (RAG):\", final_response)\n",
-    "        if sources:\n",
-    "            print(\"📚 Sources:\", \", \".join([f\"{src} (score: {score})\" for src, score in sources]))\n",
-    "        chat_history_log.append(f\"{timestamp} | {session_id} | Bot (RAG) [{user_lang}]: {final_response}\")\n",
-    "    else:\n",
-    "        print(\"⚠️ No relevant info found. Asking Gemini directly...\")\n",
-    "        response = chat.send_message(translated_input)\n",
-    "        final_response = translate_text(response.text, target_lang=user_lang)\n",
-    "        print(\"Bot:\", final_response)\n",
-    "        chat_history_log.append(f\"{timestamp} | {session_id} | Bot [{user_lang}]: {final_response}\")\n",
-    "\n",
-    "# Save history\n",
-    "chat_history_file = f\"{session_prefix}_chat_history.txt\"\n",
-    "with open(chat_history_file, \"w\", encoding=\"utf-8\") as f:\n",
-    "    for line in chat_history_log:\n",
-    "        f.write(line + \"\\n\")\n",
-    "\n",
-    "# Summarize chat\n",
-    "with open(chat_history_file, \"r\", encoding=\"utf-8\") as f:\n",
-    "    chat_text = f.read()\n",
-    "\n",
-    "summary_prompt = f\"Summarize the following conversation briefly:\\n\\n{chat_text}\"\n",
-    "summary_response = model.generate_content(summary_prompt)\n",
-    "\n",
-    "summary_file = f\"{session_prefix}_summary.txt\"\n",
-    "print(\"\\n📝 Summary:\\n\", summary_response.text)\n",
-    "\n",
-    "with open(summary_file, \"w\", encoding=\"utf-8\") as f:\n",
-    "    f.write(summary_response.text)\n"
-   ]
-  }
- ],
- "metadata": {
-  "kernelspec": {
-   "display_name": "exoplanet_prj",
-   "language": "python",
-   "name": "python3"
-  },
-  "language_info": {
-   "codemirror_mode": {
-    "name": "ipython",
-    "version": 3
-   },
-   "file_extension": ".py",
-   "mimetype": "text/x-python",
-   "name": "python",
-   "nbconvert_exporter": "python",
-   "pygments_lexer": "ipython3",
-   "version": "3.9.21"
-  }
- },
- "nbformat": 4,
- "nbformat_minor": 5
-}
+    return empathy_prefix.get(emotion, "") + base_response
+
+def generate_gemini_answer(query, k=3, similarity_threshold=0.6):
+    query_embedding = embedder.encode([query])[0]
+    results = collection.query(query_embeddings=[query_embedding], n_results=k)
+
+    if not results['documents'][0] or len(results['documents'][0]) == 0:
+        return "I'm sorry, I couldn't find any relevant information to answer your question."
+
+    context = "\n\n".join(results['documents'][0])
+    prompt = f"""You are a helpful and emotionally intelligent assistant. Respond with empathy.
+
+Context:
+{context}
+
+Question: {query}
+Answer:"""
+
+    response = model.generate_content(prompt)
+    return response.text
+
+# CHAT SESSION
+session_id = str(uuid.uuid4())
+session_start_time = datetime.datetime.now().strftime("%Y-%m-%d %H:%M:%S")
+chat_history_log = []
+
+print(f"🤖 Gemini EQ Chatbot (Session ID: {session_id}) - Type 'exit' to quit")
+
+while True:
+    user_input = input("You: ")
+    if user_input.lower() in ["exit", "quit"]:
+        print("Bot: Goodbye!")
+        break
+
+    emotion, confidence = detect_emotion(user_input)
+    chat_history_log.append(f"User: {user_input} [Emotion: {emotion} ({confidence:.2f})]")
+
+    rag_response = generate_gemini_answer(user_input)
+    empathetic_response = add_empathy_to_response(emotion, rag_response)
+    print("Bot (EQ-RAG):", empathetic_response)
+    chat_history_log.append(f"Bot (EQ-RAG): {empathetic_response}")
+
+# Save chat history
+with open(f"chat_history_{session_id}.txt", "w", encoding="utf-8") as f:
+    f.write(f"Session ID: {session_id}\nStart Time: {session_start_time}\n\n")
+    for line in chat_history_log:
+        f.write(line + "\n")
+
+# Summarize chat
+with open(f"chat_history_{session_id}.txt", "r", encoding="utf-8") as f:
+    chat_text = f.read()
+
+summary_prompt = f"Summarize the following emotionally rich conversation briefly:\n\n{chat_text}"
+summary_response = model.generate_content(summary_prompt)
+print("\nSummary:\n", summary_response.text)
+
+with open(f"summary_{session_id}.txt", "w", encoding="utf-8") as f:
+    f.write(summary_resp
