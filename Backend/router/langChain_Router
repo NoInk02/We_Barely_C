@@ -1,0 +1,90 @@
+from langchain.chains.router import MultiRouteChain, RouterChain
+from langchain.schema import BaseLanguageModel, LLMResult
+from langchain.chat_models import ChatOpenAI
+from langchain.chains import LLMChain
+from langchain.prompts import PromptTemplate
+from langchain.schema import BasePromptTemplate
+from langchain.schema import BaseChain
+from langchain.schema import RunnableConfig
+from langchain.schema.language_model import BaseLanguageModel
+from langchain.schema.router import RouterOutput
+from langchain.schema.output import ChainValues
+from langchain.schema.runnable import Runnable
+
+from langdetect import detect
+
+# Dummy stub for your Gemini + RAG chain per language
+class GeminiRAGChain(BaseChain):
+    def __init__(self, language: str):
+        self.language = language
+
+    def _call(self, inputs: dict) -> dict:
+        # Here, insert your multi-language translation and RAG + Gemini prompt code
+        question = inputs["question"]
+        # Simulate response:
+        answer = f"Answer in {self.language} for: {question}"
+        return {"answer": answer}
+
+    @property
+    def input_keys(self):
+        return ["question"]
+
+    @property
+    def output_keys(self):
+        return ["answer"]
+
+# Router chain: decides which language pipeline to use based on detected language
+class LanguageRouterChain(RouterChain):
+    def _call(self, inputs: dict, run_manager=None) -> dict:
+        question = inputs["question"]
+        lang = detect(question)
+        # Simple mapping
+        if lang.startswith("en"):
+            dest = "english"
+        elif lang.startswith("es"):
+            dest = "spanish"
+        elif lang.startswith("hi"):
+            dest = "hindi"
+        else:
+            dest = "english"  # fallback
+
+        return {"destination": dest, "next_inputs": inputs}
+
+    @property
+    def input_keys(self):
+        return ["question"]
+
+    @property
+    def output_keys(self):
+        return ["destination", "next_inputs"]
+
+# Setup individual language chains
+english_chain = GeminiRAGChain(language="English")
+spanish_chain = GeminiRAGChain(language="Spanish")
+hindi_chain = GeminiRAGChain(language="Hindi")
+
+# Setup router chain
+router_chain = LanguageRouterChain()
+
+# Setup MultiRouteChain with language chains and router
+langchain_router = MultiRouteChain(
+    router_chain=router_chain,
+    destination_chains={
+        "english": english_chain,
+        "spanish": spanish_chain,
+        "hindi": hindi_chain,
+    },
+    default_chain=english_chain,
+    verbose=True,
+)
+
+# Example usage
+def chat_with_router(user_question: str):
+    output = langchain_router.run({"question": user_question})
+    print(f"Q: {user_question}\nA: {output}")
+
+# Test it
+chat_with_router("What is AI?")
+chat_with_router("¿Qué es la inteligencia artificial?")
+chat_with_router("कृत्रिम बुद्धिमत्ता क्या है?")
+chat_with_router("Bonjour, comment ça va?")
