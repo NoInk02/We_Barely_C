@@ -62,7 +62,7 @@ def generate_gemini_answer(query, k=3, similarity_threshold=0.6):
     results = collection.query(query_embeddings=[query_embedding], n_results=k)
 
     if not results['documents'][0] or len(results['documents'][0]) == 0:
-        return "I'm sorry, I couldn't find any relevant information to answer your question."
+        return None, 0.0  # Return None with low confidence
 
     context = "\n\n".join(results['documents'][0])
     prompt = f"""You are a helpful and emotionally intelligent assistant. Respond with empathy.
@@ -74,12 +74,15 @@ Question: {query}
 Answer:"""
 
     response = model.generate_content(prompt)
-    return response.text
+    # Simulate confidence by inverse of average distance
+    avg_score = 1 - sum(results['distances'][0]) / len(results['distances'][0])
+    return response.text, avg_score
 
 # CHAT SESSION
 session_id = str(uuid.uuid4())
 session_start_time = datetime.datetime.now().strftime("%Y-%m-%d %H:%M:%S")
 chat_history_log = []
+CONFIDENCE_THRESHOLD = 0.65
 
 print(f"🤖 Gemini EQ Chatbot (Session ID: {session_id}) - Type 'exit' to quit")
 
@@ -92,10 +95,15 @@ while True:
     emotion, confidence = detect_emotion(user_input)
     chat_history_log.append(f"User: {user_input} [Emotion: {emotion} ({confidence:.2f})]")
 
-    rag_response = generate_gemini_answer(user_input)
-    empathetic_response = add_empathy_to_response(emotion, rag_response)
-    print("Bot (EQ-RAG):", empathetic_response)
-    chat_history_log.append(f"Bot (EQ-RAG): {empathetic_response}")
+    rag_response, confidence_score = generate_gemini_answer(user_input)
+
+    if rag_response and confidence_score >= CONFIDENCE_THRESHOLD:
+        empathetic_response = add_empathy_to_response(emotion, rag_response)
+        print("Bot (EQ-RAG):", empathetic_response)
+        chat_history_log.append(f"Bot (EQ-RAG): {empathetic_response} [Confidence: {confidence_score:.2f}]")
+    else:
+        print("Bot: I'm not confident in my answer. Escalating to a human agent... 🧑‍💼")
+        chat_history_log.append("Bot: Escalation triggered due to low confidence.")
 
 # Save chat history
 with open(f"chat_history_{session_id}.txt", "w", encoding="utf-8") as f:
@@ -112,4 +120,4 @@ summary_response = model.generate_content(summary_prompt)
 print("\nSummary:\n", summary_response.text)
 
 with open(f"summary_{session_id}.txt", "w", encoding="utf-8") as f:
-    f.write(summary_resp
+    f.write(summary_response.text)
