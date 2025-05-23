@@ -93,6 +93,20 @@ def notify_human_agent(session_id, user_input):
     except Exception as e:
         print(f"Bot: Notification failed due to: {e}")
 
+def ask_csat_feedback():
+    while True:
+        try:
+            rating = int(input("Please rate your experience with this chat (1-5): "))
+            if 1 <= rating <= 5:
+                break
+            else:
+                print("Please enter a number between 1 and 5.")
+        except ValueError:
+            print("Invalid input. Please enter a number between 1 and 5.")
+
+    text_feedback = input("Optional: Share any comments about your experience: ")
+    return rating, text_feedback
+
 # CHAT SESSION
 session_id = str(uuid.uuid4())
 session_start_time = datetime.datetime.now().strftime("%Y-%m-%d %H:%M:%S")
@@ -137,3 +151,12 @@ print("\nSummary:\n", summary_response.text)
 
 with open(f"summary_{session_id}.txt", "w", encoding="utf-8") as f:
     f.write(summary_response.text)
+
+# Ask CSAT feedback with optional comment
+csat_rating, csat_comment = ask_csat_feedback()
+print(f"Thank you for your feedback! You rated this chat: {csat_rating}/5")
+if csat_comment:
+    print(f"Your comment: {csat_comment}")
+
+with open(f"csat_{session_id}.txt", "w", encoding="utf-8") as f:
+    f.write(f"Session ID: {session_id}\nCSAT Rating: {csat_rating}\nComment: {csat_comment}\n")
