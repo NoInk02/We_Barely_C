@@ -1,8 +1,8 @@
 from fastapi import APIRouter, Depends, HTTPException, status
-from Backend.database.admin_db import AdminDB
-from Backend.schemas.user import AdminCreate, AdminOut
-from Backend.support.jwt import create_access_token
-from Backend.support.logger import Logger
+from database.admin_db import AdminDB
+from schemas.admin_user import AdminCreate
+from support.jwt import create_access_token
+from support.logger import Logger
 import bcrypt
 
 logger = Logger()
@@ -19,7 +19,7 @@ def get_admin_db():
     return AdminDB()
 
 
-@router.post("/register", response_model=AdminOut)
+@router.post("/register")
 async def register_admin(admin: AdminCreate, db: AdminDB = Depends(get_admin_db)):
     logger.log_debug(f"recieved register request with data {admin}")
     existing = await db.get_admin(admin.username)

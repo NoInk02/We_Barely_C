@@ -1,6 +1,6 @@
 from jose import JWTError, jwt
 from datetime import datetime, timedelta
-from Backend.config.config import settings
+from config.config import settings
 
 # Configuration
 SECRET_KEY = settings.JWT_SECRET_KEY

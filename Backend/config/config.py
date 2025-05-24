@@ -12,7 +12,9 @@ class Settings():
     MONGO_URI = os.getenv("MONGO_HOST")
     MASTER_DB_NAME = os.getenv("MASTER_DB_NAME")
     ADMIN_LIST = os.getenv("ADMIN_TABLE_NAME")
+    COMPANY_LIST = os.getenv("COMPANY_TABLE_NAME")
     ACCESS_TOKEN_EXPIRE_MINUTES = os.getenv("ACCESS_TOKEN_EXPIRE_MINUTES")
+    JWT_SECRET_KEY = os.getenv("jwt_secret_key")
 
 
 settings = Settings()
