@@ -1,11 +1,8 @@
 import os
-from dotenv import load_dotenv
 
 
 # ENV path
 env_path = os.path.join(os.path.dirname(__file__), '..', '.env')
-
-# env = load_dotenv(env_path)
 
 # Load environment variables
 class Settings():
@@ -15,6 +12,7 @@ class Settings():
     COMPANY_LIST = 'company_list'
     ACCESS_TOKEN_EXPIRE_MINUTES = 30
     JWT_SECRET_KEY = '9fsXWIn4SbNpqrpanTN8NnhfcuaE5dXjP5hlH1jW1WU4Yj76RNIloC7vNWDlOdrr'
+    GEMINI_API_KEY = "AIzaSyCSypgJaG3XLvlJvbDg_kg5RbzZm4vf9B8"
 
 
 settings = Settings()

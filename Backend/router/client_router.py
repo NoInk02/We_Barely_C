@@ -4,6 +4,7 @@ from database.client_db import ClientDB
 from support.jwt import create_access_token, verify_token
 from config.config import settings
 
+
 router = APIRouter(prefix="/{company_id}/clients", tags=["clients"])
 
 def get_client_db():

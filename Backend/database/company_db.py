@@ -81,14 +81,14 @@ class CompanyDB:
         company_data = await self.collection.find_one({"companyID": company_id}, {"_id": 0})
         if company_data:
             logger.log_info(f"Retrieved company: {company_data.get('companyID')} ({company_data.get('name')})")
-            return CompanyModel(**company_data)
+            return company_data
         else:
             logger.log_error(f"No company found with ID {company_id}")
             return None
 
     async def update_company(self, company_id: str, update_data: dict) -> bool:
         result = await self.collection.update_one(
-            {"_id": ObjectId(company_id)},
+            {"companyID": company_id},
             {"$set": update_data}
         )
         if result.modified_count:

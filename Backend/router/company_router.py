@@ -84,6 +84,9 @@ async def add_files_to_context(
     admin=Depends(admin_oauth2_scheme)
 ):
     verify_company_access(company_id, admin)
+    
+    if not files.filename.endswith('.pdf'):
+        raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail="Only PDF files are supported")
 
     if not files:
         raise HTTPException(status_code=400, detail="No files uploaded")
