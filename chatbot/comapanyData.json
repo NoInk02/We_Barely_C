@@ -1,0 +1,158 @@
+{
+  "company_info": {
+    "name": "SwiftShip Logistics",
+    "address": "123 Courier Lane, Shipville, NY 10001",
+    "email": "support@swiftship.com",
+    "phone": "+1-800-555-1234",
+    "working_hours": "Mon-Sat: 9am - 6pm"
+  },
+  "policies": {
+    "return_policy": "Customers can request a return within 14 days of delivery. Return shipping is free for damaged goods.",
+    "shipping_policy": "We offer Standard (3-5 days), Express (1-2 days), and International shipping. Tracking is available for all services.",
+    "refund_policy": "Refunds are issued within 5 business days after inspection of returned items."
+  },
+  "services": [
+    {
+      "type": "Standard Shipping",
+      "delivery_time": "3-5 business days",
+      "rate": "$5 per kg"
+    },
+    {
+      "type": "Express Shipping",
+      "delivery_time": "1-2 business days",
+      "rate": "$10 per kg"
+    },
+    {
+      "type": "International Shipping",
+      "delivery_time": "5-10 business days",
+      "rate": "$15 per kg"
+    }
+  ],
+  "faqs": [
+    {
+      "question": "How do I track my shipment?",
+      "answer": "You can track your shipment using the tracking number provided in your confirmation email at swiftship.com/track."
+    },
+    {
+      "question": "What should I do if my package is delayed?",
+      "answer": "Delays can occur due to weather or customs. If your package is over 3 days late, contact our support team."
+    },
+    {
+      "question": "How do I change my delivery address?",
+      "answer": "Contact support within 12 hours of placing your order to request an address change."
+    },
+    {
+      "question": "Can I insure my shipment?",
+      "answer": "Yes, insurance is available at checkout for an additional fee based on the declared value of the item."
+    },
+    {
+      "question": "How long will it take for my order to arrive?",
+      "answer": "Orders typically arrive within 3-7 business days, depending on your location and selected shipping method."
+    },
+    {
+      "question": "What shipping methods do you offer?",
+      "answer": "We offer standard, expedited, and express shipping options. Shipping carriers include FedEx, UPS, and USPS."
+    },
+    {
+      "question": "Do you offer express or expedited shipping options?",
+      "answer": "Yes, express delivers in 1-2 business days, while expedited takes 2-3 days."
+    },
+    {
+      "question": "What are your shipping rates?",
+      "answer": "Shipping rates vary based on weight, destination, and method. Rates are calculated at checkout."
+    },
+    {
+      "question": "What’s the difference between standard and expedited shipping?",
+      "answer": "Standard takes 5-7 days, expedited typically arrives in 2-3 days."
+    },
+    {
+      "question": "Do you offer international shipping?",
+      "answer": "Yes, we ship to over 100 countries."
+    },
+    {
+      "question": "Are there any shipping restrictions for certain products?",
+      "answer": "Yes, some items like batteries, aerosols, or perishables may have restrictions."
+    },
+    {
+      "question": "Is there a tracking number for my order?",
+      "answer": "Yes, you’ll receive an email with tracking details."
+    },
+    {
+      "question": "How do I track my order’s shipping progress?",
+      "answer": "Use the tracking number to view real-time updates on the carrier’s website."
+    },
+    {
+      "question": "Do you offer shipping updates via email or SMS?",
+      "answer": "Yes, select your preferred method at checkout."
+    },
+    {
+      "question": "Can I specify a delivery date or time?",
+      "answer": "Currently, scheduled deliveries are not available. Use expedited shipping for faster delivery."
+    },
+    {
+      "question": "What happens if my package gets lost or damaged?",
+      "answer": "Contact support for investigation and possible replacement or refund."
+    },
+    {
+      "question": "Can I change my shipping address after placing the order?",
+      "answer": "If the order hasn’t shipped yet, contact customer support."
+    },
+    {
+      "question": "Can I reroute my package?",
+      "answer": "Rerouting may be available through the carrier. Contact us immediately."
+    },
+    {
+      "question": "What happens if I miss the delivery attempt?",
+      "answer": "The carrier may redeliver or leave a pickup notice."
+    },
+    {
+      "question": "Can I combine multiple orders?",
+      "answer": "Yes, if they haven’t shipped yet and were placed close together."
+    },
+    {
+      "question": "Do you provide free shipping?",
+      "answer": "Free standard shipping on orders over $50 within the continental U.S."
+    },
+    {
+      "question": "Do you offer local pickup?",
+      "answer": "Yes, at select locations."
+    },
+    {
+      "question": "Do you offer signature confirmation?",
+      "answer": "Yes, available for a fee at checkout."
+    },
+    {
+      "question": "Is there a same-day dispatch cut-off time?",
+      "answer": "Yes, orders before 2 PM local warehouse time qualify."
+    },
+    {
+      "question": "What should I do if my order is late?",
+      "answer": "Check your tracking number and contact support."
+    },
+    {
+      "question": "Are there delays during holidays or peak seasons?",
+      "answer": "Yes, order early during such periods."
+    },
+    {
+      "question": "What is your return policy for late or damaged items?",
+      "answer": "Contact support within 7 days for a full refund or replacement."
+    }
+  ],
+  "troubleshooting": {
+    "tracking_number_not_working": [
+      "Ensure the number is correct.",
+      "Wait 12 hours after shipment.",
+      "Contact support if issue persists."
+    ],
+    "package_arrived_damaged": [
+      "Take a photo.",
+      "Contact support within 48 hours.",
+      "We’ll investigate and issue refund/reshipment."
+    ]
+  },
+  "escalation": {
+    "trigger": "User asks 2+ questions in a row or types 'talk to human'",
+    "email": "priority@swiftship.com",
+    "support_ticket_url": "https://swiftship.com/support"
+  }
+}
