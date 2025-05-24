@@ -5,16 +5,16 @@ from dotenv import load_dotenv
 # ENV path
 env_path = os.path.join(os.path.dirname(__file__), '..', '.env')
 
-env = load_dotenv(env_path)
+# env = load_dotenv(env_path)
 
 # Load environment variables
 class Settings():
-    MONGO_URI = os.getenv("MONGO_HOST")
-    MASTER_DB_NAME = os.getenv("MASTER_DB_NAME")
-    ADMIN_LIST = os.getenv("ADMIN_TABLE_NAME")
-    COMPANY_LIST = os.getenv("COMPANY_TABLE_NAME")
-    ACCESS_TOKEN_EXPIRE_MINUTES = os.getenv("ACCESS_TOKEN_EXPIRE_MINUTES")
-    JWT_SECRET_KEY = os.getenv("jwt_secret_key")
+    MONGO_URI = 'mongodb+srv://Cobaltboy:Affan0503@devhack-team-atom.cfskp.mongodb.net/?retryWrites=true&w=majority&appName=DevHack-Team-Atom'
+    MASTER_DB_NAME = 'flipr-hackathon'
+    ADMIN_LIST = 'admin_list'
+    COMPANY_LIST = 'company_list'
+    ACCESS_TOKEN_EXPIRE_MINUTES = 30
+    JWT_SECRET_KEY = '9fsXWIn4SbNpqrpanTN8NnhfcuaE5dXjP5hlH1jW1WU4Yj76RNIloC7vNWDlOdrr'
 
 
 settings = Settings()

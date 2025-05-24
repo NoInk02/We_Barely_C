@@ -5,3 +5,7 @@ class AdminCreate(BaseModel):
     password: str
     company_list: list[str]
     email: EmailStr
+
+class AdminLogin(BaseModel):
+    username: str
+    password: str

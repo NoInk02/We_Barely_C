@@ -1,6 +1,7 @@
 from motor.motor_asyncio import AsyncIOMotorClient
 from config.config import settings
 from support.logger import Logger
+import bcrypt
 
 logger = Logger()
 logger.user = "admin_db_handler"
@@ -22,24 +23,24 @@ class AdminDB:
         })
         logger.log_info(f"Admin user stored with username {username} and email {email}")
 
-    async def authenticate(self, username: str, passwordHash: str, email: str):
+    async def authenticate(self, username: str, passwordHash: str):
         user = await self.collection.find_one(
-            {"username": username, "email": email}, {'_id': 0}
+            {"username": username}, {'_id': 0}
         )
         if not user:
             logger.log_error(f"Login attempt failed: user {username} not found!")
             return False
         
-        if user["passwordHash"] == passwordHash:
+        if bcrypt.checkpw(password= passwordHash.encode('utf-8'), hashed_password= user['passwordHash'].encode('utf_8')):
             logger.log_info(f"Login for user {username} authenticated successfully!")
             return True
         else:
-            logger.log_error(f"Login attempt for user {username} with wrong password.")
+            logger.log_error(f"Login attempt for user {user} with wrong password. {passwordHash}")
             return False
 
-    async def delete_admin(self, username: str, email: str):
+    async def delete_admin(self, username: str):
         result = await self.collection.delete_one(
-            {"username": username, "email": email}
+            {"username": username}
         )
         if result.deleted_count:
             logger.log_info(f"Deleted admin {username}")
