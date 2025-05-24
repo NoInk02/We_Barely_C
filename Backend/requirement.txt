@@ -6,3 +6,8 @@ motor==3.7.1
 colorama==0.4.6
 bcrypt==4.3.0
 python_jose==3.4.0
+
+
+google-generativeai>=0.3.0
+sentence-transformers>=2.2.2
+chromadb>=0.4.15

@@ -1,9 +1,13 @@
-from fastapi import APIRouter, HTTPException, Depends, status
+from fastapi import APIRouter, HTTPException, Depends, status, File, UploadFile, Response
 from fastapi.security import HTTPBearer, HTTPAuthorizationCredentials
 from database.company_db import CompanyDB
 from database.admin_db import AdminDB
 from support.jwt import verify_token
 from schemas.company import CompanyModel
+from typing import List
+
+
+
 
 router = APIRouter(prefix="/company", tags=["company"])
 security = HTTPBearer()
@@ -50,9 +54,16 @@ async def add_company(
     company: CompanyModel,
     db: CompanyDB = Depends(get_company_db),
     admin=Depends(admin_oauth2_scheme)
-):
+):  
+    
+    # Check if company exists already
+    company_test = await db.get_company(company_id= company.companyID)
+
+    if company_test is not None:
+        raise HTTPException(status_code=status.HTTP_409_CONFLICT, detail="Company already exists")
+
     # Insert company
-    company_id = await db.add_company(company.dict())
+    company_id = await db.add_company(company)
 
     # Update admin's company_list to include this new companyID if not already present
     admin_db = AdminDB()
@@ -65,6 +76,43 @@ async def add_company(
     return {"message": "Company added", "id": company_id}
 
 
+@router.post("/{company_id}/add_files")
+async def add_files_to_context(
+    company_id: str,
+    files: UploadFile = File(...),
+    db: CompanyDB = Depends(get_company_db),
+    admin=Depends(admin_oauth2_scheme)
+):
+    verify_company_access(company_id, admin)
+
+    if not files:
+        raise HTTPException(status_code=400, detail="No files uploaded")
+
+    try:
+        file_refs = await db.add_files_to_context(company_id, files)
+        return {"message": "Files uploaded successfully", "files": file_refs}
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=f"Error uploading files: {str(e)}")
+
+
+@router.get("/{company_id}/context_file/{file_id}")
+async def download_context_file(
+    company_id: str,
+    file_id: str,
+    db: CompanyDB = Depends(get_company_db),
+    admin=Depends(admin_oauth2_scheme)
+):
+    verify_company_access(company_id, admin)
+
+    file_info = await db.get_file_from_context(file_id)
+    if not file_info:
+        raise HTTPException(status_code=404, detail="File not found")
+
+    return Response(
+        content=file_info["data"],
+        media_type=file_info["content_type"],
+        headers={"Content-Disposition": f"attachment; filename={file_info['filename']}"}
+    )
 
 @router.get("/{company_id}")
 async def get_company(
