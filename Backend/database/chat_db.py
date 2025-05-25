@@ -1,3 +1,4 @@
+
 import uuid
 from bson import ObjectId
 from fastapi import UploadFile
@@ -24,11 +25,28 @@ class ChatDB:
         self.client = AsyncIOMotorClient(settings.MONGO_URI)
         self.master_db = self.client[settings.MASTER_DB_NAME]
         self.collection = self.master_db[settings.COMPANY_LIST]
+        # Fix 1: Initialize GridFS bucket
+        self.fs_bucket = AsyncIOMotorGridFSBucket(self.master_db)
+
+    def _convert_objectids_to_strings(self, data):
+        """
+        Recursively convert ObjectId instances to strings in nested data structures
+        """
+        if isinstance(data, dict):
+            return {key: self._convert_objectids_to_strings(value) for key, value in data.items()}
+        elif isinstance(data, list):
+            return [self._convert_objectids_to_strings(item) for item in data]
+        elif isinstance(data, ObjectId):
+            return str(data)
+        else:
+            return data
 
     async def get_company(self, company_id: str) -> Optional[CompanyModel]:
         company_data = await self.collection.find_one({"companyID": company_id}, {"_id": 0})
         if company_data:
-            return CompanyModel(**company_data)
+            # Fix 2: Convert ObjectIds to strings before creating Pydantic model
+            cleaned_data = self._convert_objectids_to_strings(company_data)
+            return CompanyModel(**cleaned_data)
         else:
             logger.log_error(f"Company {company_id} not found")
             return None
@@ -38,7 +56,6 @@ class ChatDB:
             if bot.chatID == chat_id:
                 return bot
         return None
-
 
     async def save_company(self, company: CompanyModel) -> bool:
         """
@@ -54,7 +71,6 @@ class ChatDB:
         else:
             logger.log_error(f"No changes made or failed to update company {company.companyID}")
             return False
-
 
     async def create_chat(self, company_id: str, client_id: str) -> ChatModel:
         company = await self.get_company(company_id)
@@ -92,7 +108,6 @@ class ChatDB:
 
         logger.log_info(f"Created chat {new_chat_id} for client {client_id} in company {company_id}")
         return new_chat
-
 
     async def get_chat(self, company_id: str, chat_id: str) -> Optional[ChatModel]:
         company = await self.get_company(company_id)
@@ -138,7 +153,6 @@ class ChatDB:
 
         raise Exception("Chat not found")
 
-
     async def add_files_to_chat(self, company_id: str, chat_id: str, file_ids: list[str]) -> bool:
         company = await self.get_company(company_id)
         if not company:
@@ -173,7 +187,7 @@ class ChatDB:
             content,
             metadata={"content_type": file.content_type, "company_id": company_id}
         )
-        return gridfs_id
+        return str(gridfs_id)  # Convert ObjectId to string before returning
 
     async def add_file_to_chat(self, company_id: str, chat_id: str, file_id: str) -> bool:
         company = await self.get_company(company_id)

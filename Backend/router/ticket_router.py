@@ -79,6 +79,25 @@ async def get_tickets(
         tickets = [t for t in tickets if t['assigned_to'] == token_data['username']]
 
     return tickets
+@router.get("/get_ticket/{ticket_id}")
+async def get_tickets(
+    ticket_id:str,
+    company_id: str,
+    db: TicketDB = Depends(get_ticket_db),
+    token_data=Depends(oauth2_scheme)
+):
+    if token_data["type"] == ("client", 'helper'):
+        raise HTTPException(status_code=403, detail="Access denied")
+
+    tickets = await db.get_all_tickets(company_id)
+    
+    if token_data["type"] == "client":
+        tickets = [t for t in tickets if (t["clientID"] == token_data['username'] and t['ticketID']==ticket_id)]
+
+    if token_data['type'] == "helper":
+        tickets = [t for t in tickets if (t['assigned_to'] == token_data['username'] and t['ticketID']==ticket_id)]
+
+    return tickets
 
 @router.put("/assign/{ticket_id}")
 async def assign_ticket(
@@ -113,7 +132,7 @@ async def update_ticket(
     db: TicketDB = Depends(get_ticket_db),
     token_data=Depends(oauth2_scheme)
 ):
-    if token_data["type"] not in ["admin", "helper"]:
+    if token_data["type"] not in ["admin", "helper","client"]:
         raise HTTPException(status_code=403, detail="Only admins can update tickets")
     
     data = update_data.model_dump(exclude_none=True)
