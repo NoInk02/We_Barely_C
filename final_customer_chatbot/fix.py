@@ -39,46 +39,21 @@ class SupportChatBot:
         documents = []
         metadatas = []
 
-        company_info = data["company_info"]
-        doc = "Company Information:\n"
-        doc += f"Name: {company_info['name']}\n"
-        doc += f"Address: {company_info['address']}\n"
-        doc += f"Contact: {company_info['contact_email']} | {company_info['support_number']}\n"
-        doc += f"Hours: {company_info['working_hours']}"
-        documents.append(doc)
-        metadatas.append({"category": "company_info", "type": "general"})
+        def extract_docs(node, path=""):
+            if isinstance(node, dict):
+                for key, value in node.items():
+                    new_path = f"{path}/{key}" if path else key
+                    extract_docs(value, new_path)
+            elif isinstance(node, list):
+                for idx, item in enumerate(node):
+                    new_path = f"{path}[{idx}]"
+                    extract_docs(item, new_path)
+            else:
+                doc = f"{path}: {str(node)}"
+                documents.append(doc)
+                metadatas.append({"path": path})
 
-        for policy, details in data["policies"].items():
-            doc = f"Policy: {policy.replace('_', ' ').title()}\n{details}"
-            documents.append(doc)
-            metadatas.append({"category": "policies", "type": policy})
-
-        for service in data["services"]:
-            doc = f"Service: {service['name']}\n"
-            doc += f"Description: {service['description']}\n"
-            doc += f"Price: {service['price_per_kg']}"
-            documents.append(doc)
-            metadatas.append({"category": "services", "type": service['name'].lower().replace(' ', '_')})
-
-        for faq in data["faqs"]:
-            doc = f"FAQ:\nQ: {faq['question']}\nA: {faq['answer']}"
-            documents.append(doc)
-            metadatas.append({"category": "faqs", "type": "general"})
-
-        for issue in data["troubleshooting"]:
-            doc = f"Troubleshooting: {issue['issue']}\nSteps:\n"
-            doc += "\n".join([f"- {step}" for step in issue["steps"]])
-            documents.append(doc)
-            metadatas.append({"category": "troubleshooting", "type": issue['issue'].lower().replace(' ', '_')})
-
-        esc = data["escalation"]
-        doc = "Escalation Info:\n"
-        doc += f"Triggers: {esc['human_contact_trigger']}\n"
-        doc += f"Email: {esc['email_for_escalation']}\n"
-        doc += f"Portal: {esc['support_ticket_url']}"
-        documents.append(doc)
-        metadatas.append({"category": "escalation", "type": "contact"})
-
+        extract_docs(data)
         return documents, metadatas
 
     def setup_chroma(self):
@@ -115,7 +90,7 @@ class SupportChatBot:
         context = "Relevant Information:\n\n"
         for doc, meta, dist in zip(results['documents'][0], results['metadatas'][0], results['distances'][0]):
             confidence_for_doc = max(0.0, 1 - dist)
-            context += f"[From {meta['category'].title()} - Confidence: {confidence_for_doc:.2f}]\n"
+            context += f"[From {meta.get('path', 'Unknown')} - Confidence: {confidence_for_doc:.2f}]\n"
             context += f"{doc}\n\n"
 
         emotion, _ = self.detect_emotion(query)
