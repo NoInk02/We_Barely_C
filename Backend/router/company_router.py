@@ -48,6 +48,11 @@ def verify_company_access(company_id: str, admin: dict):
             detail=f"Admin does not have access to company '{company_id}'"
         )
 
+@router.get("/get_all", tags=["public"])
+async def public_list_companies(db: CompanyDB = Depends(get_company_db)):
+    companies_cursor = db.collection.find({}, {"_id": 0, "companyID": 1, "name": 1, "description": 1})
+    companies = await companies_cursor.to_list(length=None)
+    return companies
 
 @router.post("/add")
 async def add_company(
@@ -167,8 +172,4 @@ async def list_companies(
     filtered = [c for c in all_companies if c["companyID"] in admin["company_list"]]
     return filtered
 
-@router.get("/get_all", tags=["public"])
-async def public_list_companies(db: CompanyDB = Depends(get_company_db)):
-    companies_cursor = db.collection.find({}, {"_id": 0, "companyID": 1, "name": 1, "description": 1})
-    companies = await companies_cursor.to_list(length=None)
-    return companies
+
