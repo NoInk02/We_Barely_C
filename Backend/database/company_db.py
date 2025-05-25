@@ -30,7 +30,7 @@ class CompanyDB:
         grid_out_id = await fs_bucket.upload_from_stream(
             file.filename,
             content,
-            metadata={"content_type": file.content_type, "compant_id": company_id}
+            metadata={"content_type": file.content_type, "company_id": company_id}
         )
 
         file_refs.append({
