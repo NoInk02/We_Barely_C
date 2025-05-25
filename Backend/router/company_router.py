@@ -166,3 +166,9 @@ async def list_companies(
     # Filter only companies admin has access to
     filtered = [c for c in all_companies if c["companyID"] in admin["company_list"]]
     return filtered
+
+@router.get("/get_all", tags=["public"])
+async def public_list_companies(db: CompanyDB = Depends(get_company_db)):
+    companies_cursor = db.collection.find({}, {"_id": 0, "companyID": 1, "name": 1, "description": 1})
+    companies = await companies_cursor.to_list(length=None)
+    return companies
