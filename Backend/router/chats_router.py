@@ -94,42 +94,36 @@ async def add_message(
     if user["company_id"] != company_id:
         raise HTTPException(403, "Unauthorized")
 
-    # Fetch full chat (with chatbot object if loaded in memory)
+    # Fetch full chat object including chat_mode and AI history
     chat = await chat_handler.get_chat(company_id, chat_id)
     if not chat:
         raise HTTPException(404, "Chat not found")
 
-    if chat.chat_mode== "human":
-        # Append to human history
+    if chat.chat_mode == "human":
+        # Append human message as before
         message_obj = {
             "sender": msg.sender,
             "message": msg.message,
             "timestamp": datetime.datetime.utcnow().isoformat()
         }
-
         success = await chat_handler.append_human_message(company_id, chat_id, message_obj)
         if not success:
             raise HTTPException(500, "Failed to append human message")
         return {"message": "Message added to human chat"}
 
     elif chat.chat_mode == "AI":
-        # Route to chatbot
+        # Get company data asynchronously (await if async)
+        company_stuff = await chat_handler.get_company(company_id)
 
-        company_stuff = chat_handler.get_company(company_id)
+        # Recreate chatbot and restore AI chat history
+        bot = SupportChatBot(company_data=company_stuff['context_text'])
+        bot.chat_history = chat.chat_history_AI or []
 
-        bot =  SupportChatBot(company_data=company_stuff['context_text'])
+        # Process user query
         result = bot.process_query({"query": msg.message})
 
-        # AI response packaged with metadata
-        ai_turn = {
-            "user": msg.message,
-            "bot_response": result["response"],
-            "emotion": result["emotion"],
-            "confidence": result["confidence"],
-            "timestamp": result["timestamp"]
-        }
-
-        success = await chat_handler.append_ai_turn(company_id, chat_id, ai_turn)
+        # Save updated AI chat history back to DB
+        success = await chat_handler.append_ai_turn(company_id, chat_id, bot.chat_history)
         if not success:
             raise HTTPException(500, "Failed to append AI message")
 

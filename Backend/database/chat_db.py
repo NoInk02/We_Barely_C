@@ -203,3 +203,27 @@ class ChatDB:
             logger.log_error(f"Failed to append AI message to chat {chat_id}")
             return False
 
+    async def process_ai_message(self, company_id: str, chat_id: str, client_message: str) -> dict:
+        company = await self.get_company(company_id)
+        if not company:
+            raise Exception("Company not found")
+
+        # Locate chat
+        chat = next((c for c in company.chats if c.chatID == chat_id), None)
+        if not chat:
+            raise Exception("Chat not found")
+
+        # Prepare input: list of strings or structured knowledge
+        company_data = company.context_texts  # or your JSON-parsed structure
+        chatbot = SupportChatBot(company_data)
+
+        # Restore chat history
+        chatbot.chat_history = chat.chat_history_AI or []
+
+        # Process the message
+        result = chatbot.process_query({"query": client_message})
+
+        # Update chat history in DB
+        await self.append_ai_turn(company_id, chat_id, chatbot.chat_history)
+
+        return result

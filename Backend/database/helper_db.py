@@ -5,6 +5,7 @@ from bson import ObjectId
 from typing import Optional
 from schemas.helper import HelperModel
 import bcrypt
+from database.ticket_db import TicketDB
 
 logger = Logger()
 logger.user = "helper_db_handler"
@@ -76,19 +77,21 @@ class HelperDB:
 
         assigned_ticks = helper_to_delete.get("assigned_ticks", [])
 
-        # ❗ Placeholder for reassignment logic
-        # You can call another method here to perform actual reassignment
-        logger.log_info(f"Reassigning {len(assigned_ticks)} tickets from helper {helperID}")
-        # Example: await self.reassign_tickets(company_id, assigned_ticks, exclude_helper_id=helperID)
-
         update = {
             "$pull": {
                 "helpers": {"helperID": helperID}
             }
         }
 
+        tdb = TicketDB()
+
         result = await self.collection.update_one({"companyID": company_id}, update)
         if result.modified_count:
+            # ❗ Placeholder for reassignment logic
+            # You can call another method here to perform actual reassignment
+            logger.log_info(f"Reassigning {len(assigned_ticks)} tickets from helper {helperID}")
+            # Example: await self.reassign_tickets(company_id, assigned_ticks, exclude_helper_id=helperID)
+
             logger.log_info(f"Deleted helper {helperID} from company {company_id}")
             return True
         else:
