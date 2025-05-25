@@ -116,16 +116,11 @@ async def add_message(
         company_stuff = await chat_handler.get_company(company_id)
 
         # Recreate chatbot and restore AI chat history
-        bot = SupportChatBot(company_data=company_stuff['context_text'])
+        bot = SupportChatBot(company_data=company_stuff.context_texts)
         bot.chat_history = chat.chat_history_AI or []
 
         # Process user query
-        result = bot.process_query({"query": msg.message})
-
-        # Save updated AI chat history back to DB
-        success = await chat_handler.append_ai_turn(company_id, chat_id, bot.chat_history)
-        if not success:
-            raise HTTPException(500, "Failed to append AI message")
+        result = await chat_handler.process_ai_message(company_id=company_id,chat_id=chat.chatID, client_message= msg.message)
 
         return {
             "message": "AI response generated",

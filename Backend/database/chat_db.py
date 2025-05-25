@@ -10,7 +10,11 @@ from support.logger import Logger
 from motor.motor_asyncio import AsyncIOMotorGridFSBucket
 from support.chatbot import SupportChatBot
 from database.company_db import CompanyDB
+from support.feedback import ChatFeedbackManager
 
+
+# Global list to hold all in-memory SupportChatBot instances
+chatbot_instances: list[SupportChatBot] = []
 
 logger = Logger()
 logger.user = "chat_db"
@@ -28,6 +32,13 @@ class ChatDB:
         else:
             logger.log_error(f"Company {company_id} not found")
             return None
+        
+    def get_bot_by_chat_id(self, chat_id: str) -> SupportChatBot | None:
+        for bot in chatbot_instances:
+            if getattr(bot, "chatID", None) == chat_id:
+                return bot
+        return None
+
 
     async def save_company(self, company: CompanyModel) -> bool:
         """
@@ -52,11 +63,12 @@ class ChatDB:
 
         # Load the company's context for chatbot training
         context_data = company.context_texts
+        new_chat_id = str(uuid.uuid4())
 
         # Create new SupportChatBot instance using that data
         chatbot = SupportChatBot(company_data=context_data)
-
-        new_chat_id = str(uuid.uuid4())
+        chatbot.chatID = new_chat_id  # Attach chatID for lookup
+        chatbot_instances.append(chatbot)  # Save bot in global list
         new_chat = ChatModel(
             chatID=new_chat_id,
             clientID=client_id,
@@ -100,10 +112,32 @@ class ChatDB:
 
         for chat in company.chats:
             if chat.chatID == chat_id:
+                current_mode = chat.chat_mode
+
+                if current_mode == "AI" and new_mode == "human":
+                    # Finalize AI session
+                    bot = self.get_bot_by_chat_id(chat_id)
+                    if bot:
+                        session_data = bot.end_session()
+                        
+                        #  Use session data to generate summary
+                        feedback_manager = ChatFeedbackManager(session_data= session_data)
+                        summary = feedback_manager.run()
+
+                        # Store session summary
+                        chat.chat_history_AI = session_data
+
+                        chat.chat_summary = summary
+
+                        # Remove from in-memory list
+                        chatbot_instances.remove(bot)
+
+                # Update mode
                 chat.chat_mode = new_mode
                 return await self.save_company(company)
 
         raise Exception("Chat not found")
+
 
     async def add_files_to_chat(self, company_id: str, chat_id: str, file_ids: list[str]) -> bool:
         company = await self.get_company(company_id)
@@ -204,26 +238,25 @@ class ChatDB:
             return False
 
     async def process_ai_message(self, company_id: str, chat_id: str, client_message: str) -> dict:
-        company = await self.get_company(company_id)
-        if not company:
-            raise Exception("Company not found")
+        bot = self.get_bot_by_chat_id(chat_id)
 
-        # Locate chat
-        chat = next((c for c in company.chats if c.chatID == chat_id), None)
-        if not chat:
-            raise Exception("Chat not found")
+        if not bot:
+            company = await self.get_company(company_id)
+            if not company:
+                raise Exception("Company not found")
 
-        # Prepare input: list of strings or structured knowledge
-        company_data = company.context_texts  # or your JSON-parsed structure
-        chatbot = SupportChatBot(company_data)
+            chat = next((c for c in company.chats if c.chatID == chat_id), None)
+            if not chat:
+                raise Exception("Chat not found")
 
-        # Restore chat history
-        chatbot.chat_history = chat.chat_history_AI or []
+            bot = SupportChatBot(company_data=company.context_texts)
+            bot.chatID = chat_id
+            bot.chat_history = chat.chat_history_AI or []
 
-        # Process the message
-        result = chatbot.process_query({"query": client_message})
+            chatbot_instances.append(bot)
 
-        # Update chat history in DB
-        await self.append_ai_turn(company_id, chat_id, chatbot.chat_history)
+        result = bot.process_query({"query": client_message})
+
+        await self.append_ai_turn(company_id, chat_id, bot.chat_history)
 
         return result
