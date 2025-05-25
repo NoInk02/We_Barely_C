@@ -197,9 +197,14 @@ class SupportChatBot:
         else:
             context += "No similar past tickets found.\n\n"
 
-        # 4. Compose Prompt
+        # 4. Build chat history context string
+        chat_history_text = ""
+        for turn in self.chat_history[-5:]:  # limit history to last 5 turns to avoid token overload
+            chat_history_text += f"Agent: {turn['input']}\nAssistant: {turn['response']}\n\n"
+
+        # 5. Compose Prompt including chat history
         prompt = f"""You are a support assistant bot designed to help a human support agent resolve tickets efficiently.
-    Use the following relevant context, including similar past tickets and knowledge base data, to suggest solutions or next steps.
+    Use the following relevant context, including similar past tickets, knowledge base data, and conversation history, to suggest solutions or next steps.
 
     Important Guidelines:
     1. Provide precise, actionable advice and troubleshooting steps.
@@ -211,18 +216,22 @@ class SupportChatBot:
 
     Context:
     {context}
+a
+    Conversation History:
+    {chat_history_text}
 
     Agent's Question: {query}
     Assistant's Answer:"""
 
+        # 6. Call Gemini with the prompt
         response = self.gemini_model.generate_content(prompt)
 
-        # Average confidence across both sources
+        # 7. Average confidence across both sources
         all_dists = []
         if kb_results['distances'][0]:
             all_dists.extend(kb_results['distances'][0])
         if ticket_results['distances'][0]:
-            all_dists.extend(ticket_results['distances'][0])
+            all_dists.extend(ticket_results['distances'][0])    
         avg_score = 1 - (sum(all_dists) / len(all_dists)) if all_dists else 0.0
 
         return response.text, float(avg_score), context
