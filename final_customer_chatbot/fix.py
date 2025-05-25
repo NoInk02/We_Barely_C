@@ -22,6 +22,7 @@ class SupportChatBot:
             return_all_scores=True
         )
         self.gemini_model = genai.GenerativeModel("gemini-1.5-flash")
+        self.chat = self.gemini_model.start_chat(history=[])
 
         self.documents, self.metadatas = self.load_company_data(company_data_file)
         self.collection = self.setup_chroma()
@@ -109,7 +110,7 @@ class SupportChatBot:
         )
 
         if not results['documents'][0]:
-            return None, 0.0, None
+            return "I'm sorry, I couldn't find relevant information to help with that.", 0.0, None
 
         context = "Relevant Information:\n\n"
         for doc, meta, dist in zip(results['documents'][0], results['metadatas'][0], results['distances'][0]):
@@ -119,23 +120,28 @@ class SupportChatBot:
 
         emotion, _ = self.detect_emotion(query)
 
-        prompt = f"""You are a customer support assistant for SwiftShip Logistics. 
-The user appears to be feeling {emotion}. Use the following context to answer professionally:
+        recent_turns = self.chat_history[-3:]
+        prior_conversation = "\n".join([f"User: {t['input']}\nBot: {t['response']}" for t in recent_turns])
+
+        prompt = f"""You are a customer support assistant for SwiftShip Logistics.
+
+Prior conversation:
+{prior_conversation}
+
+The user now says:
+{query}
+
+Use the following context to answer professionally:
 
 {context}
 
 Important Guidelines:
-1. For policy questions, be precise and quote exact terms when possible
-2. For service inquiries, include pricing if available
-3. For troubleshooting, list steps clearly
-4. If emotion is anger or you are unable to answer, ask the user if he wants to raise a ticket.
-5. Never make up information
-6. Act Professionally and concise your answers, not big paragraphs.
-
-Question: {query}
+1. Be consistent with prior answers if repeated
+2. Use short, professional, emotionally aware language
+3. If unsure or angry, suggest escalation
 Answer:"""
 
-        response = self.gemini_model.generate_content(prompt)
+        response = self.chat.send_message(prompt)
         best_distance = min(results['distances'][0])
         confidence_score = max(0.0, 1 - best_distance)
 
