@@ -8,7 +8,7 @@ genai.configure(api_key="AIzaSyCSypgJaG3XLvlJvbDg_kg5RbzZm4vf9B8")
 model = genai.GenerativeModel('gemini-1.5-flash')
 
 # 3. Your session ID corresponding to your JSON file in chat_sessions/
-session_id = "efd16659-089b-437a-abde-5c880a127eb0"
+session_id = "711c0ef8-1fb9-4f40-beeb-49270843f5f1"
 
 # 4. Instantiate manager
 manager = ChatFeedbackManager(session_id=session_id, genai_client=model)

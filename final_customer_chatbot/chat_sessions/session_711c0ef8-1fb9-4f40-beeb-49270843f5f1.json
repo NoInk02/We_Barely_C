@@ -1,0 +1,65 @@
+{
+  "session_id": "711c0ef8-1fb9-4f40-beeb-49270843f5f1",
+  "start_time": "2025-05-25T12:32:52.681576",
+  "end_time": "2025-05-25T12:34:14.706440",
+  "duration_seconds": 82.024864,
+  "prompt_count": 5,
+  "average_confidence": -0.3342180649439494,
+  "emotion_distribution": {
+    "neutral": 2,
+    "sadness": 2,
+    "joy": 1
+  },
+  "history": [
+    {
+      "input": "hi",
+      "response": "Hi there! How can I help you today with your SwiftShip Logistics needs?\n",
+      "emotion": {
+        "label": "neutral",
+        "score": 0.9076641201972961
+      },
+      "confidence": -0.6193160216013591,
+      "timestamp": "2025-05-25T12:32:57.439555"
+    },
+    {
+      "input": "i want to ask about my order delivery",
+      "response": "I'm sorry to hear that you're feeling sad.  To best assist you with your order delivery, could you please provide me with your order number?  Then I can check the estimated delivery date and time (FAQs [4] and [14]), and provide tracking information if available (FAQs [12]).\n",
+      "emotion": {
+        "label": "sadness",
+        "score": 0.3616848289966583
+      },
+      "confidence": 0.150691827138265,
+      "timestamp": "2025-05-25T12:33:24.936228"
+    },
+    {
+      "input": "i never said im feeling sad",
+      "response": "I apologize if my previous response was inappropriate.  How can I help you today?\n",
+      "emotion": {
+        "label": "sadness",
+        "score": 0.9928022027015686
+      },
+      "confidence": -0.8892798821131389,
+      "timestamp": "2025-05-25T12:33:45.294732"
+    },
+    {
+      "input": "my order delivery info",
+      "response": "Your order should arrive within 1-2 business days.  You will receive an email with tracking information once it ships.\n",
+      "emotion": {
+        "label": "neutral",
+        "score": 0.750884473323822
+      },
+      "confidence": 0.12225870291392005,
+      "timestamp": "2025-05-25T12:33:57.829928"
+    },
+    {
+      "input": "okay thanks",
+      "response": "Great!  Is there anything else I can help you with today?\n",
+      "emotion": {
+        "label": "joy",
+        "score": 0.4572894871234894
+      },
+      "confidence": -0.4354449510574341,
+      "timestamp": "2025-05-25T12:34:08.963533"
+    }
+  ]
+}
