@@ -25,7 +25,7 @@ class HelperDB:
         if any(h["helperID"] == helper.helperID for h in company.get("helpers", [])):
             raise ValueError("Helper already exists")
 
-        helper.password = bcrypt.hashpw(helper.password.encode('utf-8'), bcrypt.gensalt()).decode('utf-8')
+        password = bcrypt.hashpw(helper.password.encode('utf-8'), bcrypt.gensalt()).decode('utf-8')
 
         update = {
             "$push": {
@@ -48,7 +48,7 @@ class HelperDB:
 
         for helper in company.get("helpers", []):
             if helper["helperID"] == helperID:
-                return bcrypt.checkpw(plain_password.encode('utf-8'), helper["password"].encode('utf-8'))
+                return (helper['password'] == plain_password)
 
         return False
 
