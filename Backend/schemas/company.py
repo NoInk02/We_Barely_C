@@ -4,6 +4,7 @@ from bson import ObjectId
 from schemas.client import ClientModel
 from schemas.chat import ChatModel
 from schemas.helper import HelperModel
+from schemas.ticket import TicketModel
 
 # Helper to handle ObjectId in Pydantic
 
@@ -23,6 +24,6 @@ class CompanyModel(BaseModel):
     faqDICT: dict = Field(default_factory=dict)
 
     clients: List[ClientModel] = Field(default_factory=list)
-    helpers: List[str] = Field(default_factory=list)
-    tickets: List[HelperModel] = Field(default_factory=list)
+    helpers: List[HelperModel] = Field(default_factory=list)
+    tickets: List[TicketModel] = Field(default_factory=list)
     chats: List[ChatModel] = Field(default_factory=list)

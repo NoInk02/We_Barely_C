@@ -12,4 +12,3 @@ class ChatModel(BaseModel):
     ticketID: str
     files: List[str] = Field(default_factory=list)  # List of GridFS ObjectIDs or file paths
     clientID : str
-    # chatbot: Optional[SupportChatBot]
