@@ -1,0 +1,122 @@
+[
+  {
+    "ticketID": "t1d2e3f4-5678-9101-abcd-ef2345678901",
+    "title": "Delayed delivery beyond estimated date",
+    "description": "Customer reports that the package has not arrived 3 days after the estimated delivery date.",
+    "priority": "High",
+    "status": "open",
+    "assigned_helper": "helper101",
+    "clientID": "clientA",
+    "category": "Delivery Delay",
+    "resolution": "",
+    "summary": "Package delivery delayed; investigation underway to locate the shipment and expedite delivery."
+  },
+  {
+    "ticketID": "t2e3f4g5-6789-0123-abcd-ef3456789012",
+    "title": "Damaged package received",
+    "description": "Customer received package with visible damage to the box and contents inside.",
+    "priority": "High",
+    "status": "closed",
+    "assigned_helper": "helper102",
+    "clientID": "clientB",
+    "category": "Damage",
+    "resolution": "Replacement item sent and damage reported to courier service.",
+    "summary": "Package arrived damaged; replacement sent and courier notified."
+  },
+  {
+    "ticketID": "t3f4g5h6-7890-1234-abcd-ef4567890123",
+    "title": "Incorrect delivery address",
+    "description": "Package was delivered to the wrong address, customer did not receive it.",
+    "priority": "Medium",
+    "status": "open",
+    "assigned_helper": "helper103",
+    "clientID": "clientC",
+    "category": "Address Error",
+    "resolution": "",
+    "summary": "Package misdelivered; contacting courier to reroute to the correct address."
+  },
+  {
+    "ticketID": "t4g5h6i7-8901-2345-abcd-ef5678901234",
+    "title": "Tracking information not updating",
+    "description": "Customer cannot track the shipment as the tracking status has not been updated in 48 hours.",
+    "priority": "Medium",
+    "status": "closed",
+    "assigned_helper": "helper104",
+    "clientID": "clientD",
+    "category": "Tracking",
+    "resolution": "Tracking information refreshed; shipment located and updates sent to customer.",
+    "summary": "Tracking info delayed; updates provided and shipment on track."
+  },
+  {
+    "ticketID": "t5h6i7j8-9012-3456-abcd-ef6789012345",
+    "title": "Missing package",
+    "description": "Customer claims package is marked as delivered but was not received.",
+    "priority": "High",
+    "status": "open",
+    "assigned_helper": null,
+    "clientID": "clientE",
+    "category": "Lost Package",
+    "resolution": "",
+    "summary": "Package marked delivered but not received; escalation with courier underway."
+  },
+  {
+    "ticketID": "t6i7j8k9-0123-4567-abcd-ef7890123456",
+    "title": "Request for Saturday delivery",
+    "description": "Customer requests package delivery on Saturday instead of weekday.",
+    "priority": "Low",
+    "status": "open",
+    "assigned_helper": null,
+    "clientID": "clientF",
+    "category": "Delivery Request",
+    "resolution": "",
+    "summary": "Customer requested weekend delivery; flagged for scheduling team."
+  },
+  {
+    "ticketID": "t7j8k9l0-1234-5678-abcd-ef8901234567",
+    "title": "Signature required not requested",
+    "description": "Customer wants signature confirmation added to their delivery for security reasons.",
+    "priority": "Low",
+    "status": "closed",
+    "assigned_helper": "helper105",
+    "clientID": "clientG",
+    "category": "Security",
+    "resolution": "Signature confirmation added for delivery; customer notified.",
+    "summary": "Signature confirmation updated on shipment as requested."
+  },
+  {
+    "ticketID": "t8k9l0m1-2345-6789-abcd-ef9012345678",
+    "title": "Multiple packages arrived separately",
+    "description": "Customer expected a combined delivery but packages arrived in separate shipments.",
+    "priority": "Low",
+    "status": "closed",
+    "assigned_helper": "helper106",
+    "clientID": "clientH",
+    "category": "Packaging",
+    "resolution": "Explained split delivery due to weight restrictions; offered compensation.",
+    "summary": "Multiple shipments delivered; customer compensated for inconvenience."
+  },
+  {
+    "ticketID": "t9l0m1n2-3456-7890-abcd-ef0123456789",
+    "title": "Wrong item delivered",
+    "description": "Customer received a different product than ordered.",
+    "priority": "High",
+    "status": "closed",
+    "assigned_helper": "helper107",
+    "clientID": "clientI",
+    "category": "Incorrect Item",
+    "resolution": "Replaced incorrect item and arranged return of the wrong item.",
+    "summary": "Wrong item delivered; replacement shipped and return arranged."
+  },
+  {
+    "ticketID": "t0m1n2o3-4567-8901-abcd-ef1234567890",
+    "title": "International shipment stuck in customs",
+    "description": "Customer’s international order is delayed due to customs clearance issues.",
+    "priority": "Medium",
+    "status": "open",
+    "assigned_helper": "helper108",
+    "clientID": "clientJ",
+    "category": "Customs",
+    "resolution": "",
+    "summary": "Shipment delayed at customs; working with carrier and customs agents to clear delivery."
+  }
+]

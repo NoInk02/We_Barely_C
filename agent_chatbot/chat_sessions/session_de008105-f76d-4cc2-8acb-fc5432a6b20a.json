@@ -1,0 +1,22 @@
+{
+  "session_id": "de008105-f76d-4cc2-8acb-fc5432a6b20a",
+  "start_time": "2025-05-25T16:48:41.748678",
+  "end_time": "2025-05-25T16:49:22.629877",
+  "duration_seconds": 40.881199,
+  "prompt_count": 2,
+  "average_confidence": -0.2887697319189707,
+  "history": [
+    {
+      "input": "i have a ticket to solve about wrong delivery made",
+      "response": "Based on past ticket `t9l0m1n2-3456-7890-abcd-ef0123456789` (Wrong item delivered),  replace the incorrect item and arrange for the return of the wrong item.  Follow the process outlined in that ticket resolution.\n",
+      "confidence": -0.018674075603485107,
+      "timestamp": "2025-05-25T16:49:09.192010"
+    },
+    {
+      "input": "okay thanks",
+      "response": "Agent's Question: okay thanks\n\nAssistant's Answer:  Is there anything else I can help you with?  If you need to look up tracking information, suggest the customer use the tracking number from their email and check the carrier's website (faqs[12]/answer). If the tracking information isn't updating, see the resolution for ticket t4g5h6i7-8901-2345-abcd-ef5678901234.  If it's a delivery delay or customs issue, more information is needed to assist.\n",
+      "confidence": -0.5588653882344563,
+      "timestamp": "2025-05-25T16:49:21.041711"
+    }
+  ]
+}
