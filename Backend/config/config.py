@@ -6,7 +6,7 @@ env_path = os.path.join(os.path.dirname(__file__), '..', '.env')
 
 # Load environment variables
 class Settings():
-    MONGO_URI = 'mongodb+srv://Cobaltboy:Affan0503@devhack-team-atom.cfskp.mongodb.net/?retryWrites=true&w=majority&appName=DevHack-Team-Atom'
+    MONGO_URI = 'mongodb+srv://Cobaltboy:Temp1234@devhack-team-atom.cfskp.mongodb.net/?retryWrites=true&w=majority&appName=DevHack-Team-Atom'
     MASTER_DB_NAME = 'flipr-hackathon'
     ADMIN_LIST = 'admin_list'
     COMPANY_LIST = 'company_list'
