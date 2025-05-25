@@ -28,10 +28,12 @@ class SupportChatBot:
 
         self.documents, self.metadatas = self.load_company_data(company_data)
         self.collection = self.setup_chroma(        )
+        self.embedder.encode(self.documents, show_progress_bar=True, normalize_embeddings=True)
         self.chatID = None
         self.session_id = str(uuid.uuid4())
         self.chat_history = []
         self.start_time = datetime.datetime.now()
+        self.chat = self.gemini_model.start_chat(history=[])
         self.prompt_count = 0
 
     def load_company_data(self, data):
@@ -58,11 +60,10 @@ class SupportChatBot:
 
         return documents, metadatas
 
-
     def setup_chroma(self):
         client = chromadb.PersistentClient(path=self.CHROMA_PATH)
         collection = client.get_or_create_collection(name=self.COLLECTION_NAME)
-        embeddings = self.embedder.encode(self.documents, show_progress_bar=True)
+        embeddings = self.embedder.encode(self.documents, show_progress_bar=True, normalize_embeddings=True)
 
         if len(collection.get()['ids']) == 0:
             collection.add(
@@ -72,6 +73,7 @@ class SupportChatBot:
                 ids=[str(i) for i in range(len(self.documents))]
             )
         return collection
+
     
     def detect_emotion(self, text):
         emotions = self.emotion_classifier(text)[0]
@@ -79,7 +81,8 @@ class SupportChatBot:
         return top_emotion['label'], float(top_emotion['score'])
 
     def generate_response(self, query, k=3):
-        query_embedding = self.embedder.encode([query])[0]
+        query_embedding = self.embedder.encode([query], normalize_embeddings=True)[0]
+
         results = self.collection.query(
             query_embeddings=[query_embedding],
             n_results=k,
@@ -87,35 +90,42 @@ class SupportChatBot:
         )
 
         if not results['documents'][0]:
-            return None, 0.0, None
+            return "I'm sorry, I couldn't find relevant information to help with that.", 0.0, None
 
         context = "Relevant Information:\n\n"
         for doc, meta, dist in zip(results['documents'][0], results['metadatas'][0], results['distances'][0]):
-            context += f"[From {meta.get('path', 'unknown')} - Confidence: {1-dist:.2f}]\n"
+            confidence_for_doc = max(0.0, 1 - dist)
+            context += f"[From {meta.get('path', 'Unknown')} - Confidence: {confidence_for_doc:.2f}]\n"
             context += f"{doc}\n\n"
 
         emotion, _ = self.detect_emotion(query)
 
-        prompt = f"""You are a customer support assistant for SwiftShip Logistics. 
-The user appears to be feeling {emotion}. Use the following context to answer professionally:
+        recent_turns = self.chat_history[-3:]
+        prior_conversation = "\n".join([f"User: {t['input']}\nBot: {t['response']}" for t in recent_turns])
 
-{context}
+        prompt = f"""You are a customer support assistant for SwiftShip Logistics.
 
-Important Guidelines:
-1. For policy questions, be precise and quote exact terms when possible
-2. For service inquiries, include pricing if available
-3. For troubleshooting, list steps clearly
-4. If emotion is anger or you are unable to answer, ask the user if he wants to raise a ticket.
-5. Never make up information
-6. Act Professionally and concise your answers, not big paragraphs.
+    Prior conversation:
+    {prior_conversation}
 
-Question: {query}
-Answer:"""
+    The user now says:
+    {query}
 
-        response = self.gemini_model.generate_content(prompt)
-        avg_score = 1 - sum(results['distances'][0]) / len(results['distances'][0])
+    Use the following context to answer professionally:
 
-        return response.text, float(avg_score), context
+    {context}
+
+    Important Guidelines:
+    1. Be consistent with prior answers if repeated
+    2. Use short, professional, emotionally aware language
+    3. If unsure or angry, suggest escalation
+    Answer:"""
+
+        response = self.chat.send_message(prompt)
+        best_distance = min(results['distances'][0])
+        confidence_score = max(0.0, 1 - best_distance)
+
+        return response.text, confidence_score, context
 
     def process_query(self, input_dict):
         """
