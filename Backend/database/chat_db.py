@@ -35,7 +35,7 @@ class ChatDB:
         
     def get_bot_by_chat_id(self, chat_id: str) -> SupportChatBot | None:
         for bot in chatbot_instances:
-            if getattr(bot, "chatID", None) == chat_id:
+            if bot.chatID == chat_id:
                 return bot
         return None
 
