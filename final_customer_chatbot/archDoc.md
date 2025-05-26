@@ -1,18 +1,41 @@
 # 💬 SwiftShip Support Chatbot
 
-A customer support chatbot powered by Google Gemini and semantic search over company knowledge, with emotional context awareness and a feedback system.
+A customer support chatbot for SwiftShip Logistics that uses **Gemini**, **semantic search**, and **emotion-aware response generation** to deliver accurate, context-rich, and empathetic answers.
 
 ---
 
-## 📌 Features
+## ✨ Features
 
-- 💡 RAG-based answers using semantic search (ChromaDB + SentenceTransformers)
-- 🧠 Emotion detection from user queries for contextual response tone
-- 🤖 Gemini (gemini-1.5-flash) LLM-powered professional responses
-- 📝 Session logging with metadata (confidence, emotion)
-- ✅ Chat summary and feedback collector (manual or auto-generated)
+- 🔍 **Retrieval-Augmented Generation (RAG)** using ChromaDB + SentenceTransformers
+- 🧠 **Emotion detection** from user queries (angry, sad, happy, etc.)
+- 🤖 **Gemini 1.5 Flash**-based response generation with dynamic prompt conditioning
+- 💾 **Session logging** with emotion & confidence tracking
+- 📝 **Feedback collection** and Gemini-based chat summaries
 
 ---
 
-## 🏗️ Architecture
+## 🏗️ Architecture Overview
 
+```text
+ User Input
+    │
+    ▼
+[Emotion Detection] ◄────────────┐
+    │                            │
+    ▼                            │
+[Query Embedding]                │
+    │                            │
+    ▼                            │
+[Semantic Search in ChromaDB]    │
+    │                            │
+    ▼                            │
+[Build Gemini Prompt with Context & Emotion]
+    │
+    ▼
+[Gemini 1.5 Flash Response]
+    │
+    ▼
+[Log to Session File]
+    │
+    ▼
+[Feedback Prompt (manual or Gemini-generated)]
