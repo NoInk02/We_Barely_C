@@ -42,7 +42,7 @@ class ChatFeedbackManager:
         summary = self.generate_summary_with_genai()
 
         try:
-            rating_input = input("Rate your experience (1-5) or press Enter to skip: ").strip()
+            rating_input = ""
             if rating_input == "":
                 print("No manual rating provided, using auto-feedback comment...")
                 return self.generate_auto_feedback(summary)
@@ -52,7 +52,7 @@ class ChatFeedbackManager:
                 print("Invalid rating, using auto-feedback comment...")
                 return self.generate_auto_feedback(summary)
 
-            comments = input("Any comments? (optional): ")
+            comments = ""
             return {
                 "rating": rating,
                 "comments": comments,
