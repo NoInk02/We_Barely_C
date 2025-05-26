@@ -34,6 +34,20 @@ async def get_current_client_user(credentials: HTTPAuthorizationCredentials = De
     except Exception as e:
         raise HTTPException(status_code=status.HTTP_401_UNAUTHORIZED, detail=str(e))
 
+async def get_current_user(credentials: HTTPAuthorizationCredentials = Depends(security)):
+    token = credentials.credentials
+    try:
+        payload = verify_token(token)
+        if payload.get("type") != ("client","helper") :
+            raise HTTPException(status_code=status.HTTP_403_FORBIDDEN, detail="Not an Client user")
+
+        username = payload.get("username")
+        if not username:
+            raise HTTPException(status_code=status.HTTP_401_UNAUTHORIZED, detail="Invalid token payload")
+
+        return payload
+    except Exception as e:
+        raise HTTPException(status_code=status.HTTP_401_UNAUTHORIZED, detail=str(e))
 
 # Models
 
@@ -71,7 +85,7 @@ async def create_chat(company_id: str, client_id: str, user = Depends(get_curren
 
 
 @router.get("/{chat_id}")
-async def get_chat(company_id: str, chat_id: str, user=Depends(get_current_client_user)):
+async def get_chat(company_id: str, chat_id: str, user=Depends(get_current_user)):
     if user["company_id"] != company_id:
         raise HTTPException(403, "Unauthorized")
     chat = await chat_handler.get_chat(company_id, chat_id)
@@ -89,7 +103,7 @@ async def add_message(
     company_id: str,
     chat_id: str,
     msg: ChatMessageModel,
-    user=Depends(get_current_client_user),
+    user=Depends(get_current_user),
 ):
     if user["company_id"] != company_id:
         raise HTTPException(403, "Unauthorized")
@@ -132,7 +146,7 @@ async def add_message(
     raise HTTPException(400, "Invalid chat mode")
 
 @router.patch("/{chat_id}/mode")
-async def update_chat_mode(company_id: str, chat_id: str, mode_update: ChatModeUpdateModel, user=Depends(get_current_client_user)):
+async def update_chat_mode(company_id: str, chat_id: str, mode_update: ChatModeUpdateModel, user=Depends(get_current_user)):
     if user["company_id"] != company_id:
         raise HTTPException(403, "Unauthorized")
 
@@ -150,7 +164,7 @@ async def add_file_to_chat(
     company_id: str,
     chat_id: str,
     file: UploadFile = File(...),
-    user=Depends(get_current_client_user),
+    user=Depends(get_current_user),
 ):
     if user["company_id"] != company_id:
         raise HTTPException(403, "Unauthorized")
@@ -177,7 +191,7 @@ async def assign_ticket(
     client_id: str,
     chat_id: str,
     ticket: TicketAssignModel,
-    user=Depends(get_current_client_user),
+    user=Depends(get_current_user),
 ):
     if user["company_id"] != company_id or user["username"] != client_id:
         raise HTTPException(403, "Unauthorized")
