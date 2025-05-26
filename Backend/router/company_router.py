@@ -5,7 +5,8 @@ from database.admin_db import AdminDB
 from support.jwt import verify_token
 from schemas.company import CompanyModel
 from typing import List
-
+from support.pdf_to_json import PDF_to_JSON
+import io
 
 
 
@@ -97,12 +98,34 @@ async def add_files_to_context(
         raise HTTPException(status_code=400, detail="No files uploaded")
 
     try:
-        file_refs = await db.add_files_to_context(company_id, files)
-        return {"message": "Files uploaded successfully", "files": file_refs}
+        # ✅ Step 1: Store file using your existing DB logic
+        file_ref = await db.add_files_to_context(company_id, files)
+
+        # ✅ Step 2: Extract PDF content into JSON (in-memory)
+        pdf_bytes = await files.read()
+        pdf_reader = PDF_to_JSON()
+        structured_data = pdf_reader.convert_pdf_to_json_dynamic(io.BytesIO(pdf_bytes))
+
+        # ✅ Step 3: Manually update context_texts in DB
+        company = await db.collection.find_one({"companyID": company_id})
+        context_texts = company.get("context_texts", {})
+        context_texts.update(structured_data)  # Merge/override
+
+        await db.collection.update_one(
+            {"companyID": company_id},
+            {"$set": {"context_texts": context_texts}}
+        )
+
+        return {
+            "message": "File uploaded and context_texts updated",
+            "file": file_ref,
+            "extracted_sections": list(structured_data.keys())
+        }
+
     except Exception as e:
-        raise HTTPException(status_code=500, detail=f"Error uploading files: {str(e)}")
-
-
+        raise HTTPException(status_code=500, detail=f"Error uploading or processing file: {str(e)}")
+    
+    
 @router.get("/{company_id}/context_file/{file_id}")
 async def download_context_file(
     company_id: str,
