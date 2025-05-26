@@ -38,7 +38,7 @@ async def get_current_user(credentials: HTTPAuthorizationCredentials = Depends(s
     token = credentials.credentials
     try:
         payload = verify_token(token)
-        if payload.get("type") != ("client","helper") :
+        if payload.get("type") not in ("client", "helper"):
             raise HTTPException(status_code=status.HTTP_403_FORBIDDEN, detail="Not an Client user")
 
         username = payload.get("username")
